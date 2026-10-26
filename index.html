@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+<title>Mô phỏng hiện tượng điện di của glycine</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Roboto',Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#ffefba,#ffffff 45%,#d0e8ff);color:#17233b}
+  header{background:linear-gradient(90deg,#ff6a00,#ee0979,#7b2ff7);color:#fff;text-align:center;padding:28px 16px 22px;border-bottom:8px solid #ffd400}
+  header h1{margin:0;font-size:clamp(30px,5vw,54px);line-height:1.15;text-shadow:2px 2px 0 rgba(0,0,0,.25)}
+  header p{margin:12px 0 0;font-size:clamp(19px,3vw,28px);font-weight:bold}
+  main{max-width:1120px;margin:0 auto;padding:22px 16px 10px}
+  .card{background:#fff;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:22px;margin-bottom:22px;border:3px solid #ffd400}
+  .guide{font-size:clamp(19px,2.6vw,25px);line-height:1.55;text-align:center;margin:0}
+  .guide b{color:#d63384}
+  /* Controls */
+  .controls{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0 6px}
+  .btn{border:4px solid #222;border-radius:18px;padding:16px 10px;font-size:clamp(19px,2.6vw,26px);font-weight:900;cursor:pointer;line-height:1.3;transition:transform .15s}
+  .btn:hover{transform:scale(1.03)}
+  .btn small{display:block;font-size:.72em;font-weight:700;margin-top:6px}
+  #btnAcid{background:#ffe3e3;color:#a10000}
+  #btnNeutral{background:#e2f7e2;color:#0b6b0b}
+  #btnBase{background:#dbeafe;color:#0b3d91}
+  .btn.active{outline:6px solid #ffd400;transform:scale(1.04)}
+  .slider-box{text-align:center;margin-top:20px}
+  .slider-box label{font-size:clamp(20px,2.8vw,27px);font-weight:900}
+  #phValue{display:inline-block;background:#0b3d91;color:#fff;border-radius:14px;padding:4px 18px;margin-left:8px;font-size:clamp(22px,3vw,30px)}
+  input[type=range]{width:100%;height:18px;margin:16px 0 4px;accent-color:#ee0979;cursor:pointer}
+  .scale{display:flex;justify-content:space-between;font-size:18px;font-weight:700;color:#555}
+  /* Tank */
+  #tank{position:relative;height:340px;border:6px solid #0b3d91;border-radius:22px;overflow:hidden;background:linear-gradient(180deg,#eaffea,#c8f2c8);transition:background 1s}
+  #tank.acid{background:linear-gradient(180deg,#ffecec,#ffc9c9)}
+  #tank.base{background:linear-gradient(180deg,#e3f1ff,#bcd9ff)}
+  .electrode{position:absolute;top:0;bottom:0;width:118px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-weight:900;text-align:center;z-index:6}
+  .electrode .sign{font-size:64px;line-height:1}
+  .electrode .name{font-size:22px;line-height:1.25;margin-top:8px}
+  .electrode .sub{font-size:17px;font-weight:700;opacity:.9}
+  #cathode{left:0;background:#222}
+  #anode{right:0;background:#c0392b}
+  #envLabel{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);border:3px solid #0b3d91;border-radius:999px;padding:8px 22px;font-size:clamp(19px,2.6vw,26px);font-weight:900;z-index:3;white-space:nowrap}
+  #molecule{position:absolute;top:150px;left:50%;transform:translateX(-50%);transition:left 2.2s ease-in-out;z-index:4;text-align:center}
+  #molFormula{display:flex;align-items:center;gap:6px;background:#fff;border:5px solid #0b3d91;border-radius:999px;padding:12px 18px;box-shadow:0 8px 20px rgba(0,0,0,.25);font-size:clamp(24px,3.4vw,36px);font-weight:900;white-space:nowrap}
+  .group{border-radius:12px;padding:4px 10px}
+  .group.left{background:#ffe3e3}
+  .group.center{background:#fff3bf}
+  .group.right{background:#dbeafe}
+  .charge{display:inline-block;min-width:34px;height:34px;line-height:34px;border-radius:50%;color:#fff;font-size:22px;text-align:center;margin-left:2px}
+  .charge.pos{background:#e11d48}
+  .charge.neg{background:#2563eb}
+  .charge.none{background:#999}
+  #molName{margin-top:12px;font-size:clamp(20px,2.8vw,27px);font-weight:900;background:rgba(255,255,255,.92);border-radius:999px;padding:6px 18px;display:inline-block}
+  #moveArrow{position:absolute;top:105px;left:50%;transform:translateX(-50%);font-size:44px;font-weight:900;color:#0b3d91;z-index:3}
+  /* Status + reaction */
+  #status{text-align:center;font-size:clamp(23px,3.2vw,32px);font-weight:900;margin:18px 0 8px;line-height:1.4}
+  #reaction{background:#fff7d6;border:3px dashed #e67e22;border-radius:18px;padding:16px;text-align:center;font-size:clamp(22px,3vw,30px);font-weight:900;line-height:1.5}
+  #reaction small{display:block;font-size:.72em;font-weight:700;color:#444;margin-top:8px;line-height:1.5}
+  #netBox{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:16px}
+  .pill{border-radius:999px;padding:10px 22px;font-size:clamp(19px,2.6vw,25px);font-weight:900}
+  .pill.charge-pill{background:#0b3d91;color:#fff}
+  .pill.env-pill{background:#ffd400;color:#222}
+  table{width:100%;border-collapse:collapse;font-size:clamp(19px,2.6vw,24px);line-height:1.5}
+  th,td{border:3px solid #0b3d91;padding:12px;text-align:center}
+  th{background:#0b3d91;color:#fff}
+  tr:nth-child(even) td{background:#eef4ff}
+  .note{font-size:clamp(19px,2.6vw,24px);line-height:1.6}
+  .note b{color:#0b3d91}
+  footer.credit{background:#0b3d91;color:#fff;text-align:center;padding:18px 12px;font-size:clamp(13px,1.8vw,21px);font-weight:900;white-space:nowrap;overflow-x:auto}
+  @media(max-width:640px){
+    .controls{grid-template-columns:1fr}
+    .electrode{width:84px}
+    .electrode .sign{font-size:44px}
+    .electrode .name{font-size:17px}
+    #tank{height:320px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚡ MÔ PHỎNG HIỆN TƯỢNG ĐIỆN DI ⚡</h1>
+  <p>Ví dụ: phân tử Glycine — Amino acid trong chương trình Hóa học 12</p>
+</header>
+
+<main>
+  <section class="card">
+    <p class="guide">👉 <b>Cách dùng:</b> Bấm 1 trong 3 nút bên dưới, hoặc kéo thanh pH.<br>
+    Phân tử glycine sẽ <b>đổi dạng</b> và <b>di chuyển về điện cực trái dấu</b> ngay trong bể điện di.</p>
+
+    <div class="controls">
+      <button class="btn" id="btnAcid" onclick="setPH(3)">🧪 MÔI TRƯỜNG ACID<small>pH &lt; 6 • Dư H⁺</small></button>
+      <button class="btn active" id="btnNeutral" onclick="setPH(6)">⚖️ ĐIỂM ĐẲNG ĐIỆN<small>pH ≈ 6 • Cân bằng</small></button>
+      <button class="btn" id="btnBase" onclick="setPH(11)">💧 MÔI TRƯỜNG BASE<small>pH &gt; 6 • Dư OH⁻</small></button>
+    </div>
+
+    <div class="slider-box">
+      <label for="phSlider">Kéo để đổi pH: <span id="phValue">pH = 6</span></label>
+      <input type="range" id="phSlider" min="1" max="14" step="1" value="6" oninput="setPH(parseInt(this.value))">
+      <div class="scale"><span>1 • Acid mạnh</span><span>6 • Điểm đẳng điện</span><span>14 • Base mạnh</span></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div id="tank" class="neutral">
+      <div class="electrode" id="cathode"><div class="sign">–</div><div class="name">CỰC ÂM</div><div class="sub">Cathode</div></div>
+      <div class="electrode" id="anode"><div class="sign">+</div><div class="name">CỰC DƯƠNG</div><div class="sub">Anode</div></div>
+      <div id="envLabel">Môi trường cân bằng</div>
+      <div id="moveArrow"></div>
+      <div id="molecule">
+        <div id="molFormula">
+          <span class="group left" id="leftGroup">NH<sub>3</sub><span class="charge pos">+</span></span><span>–</span><span class="group center">CH<sub>2</sub></span><span>–</span><span class="group right" id="rightGroup">COO<span class="charge neg">–</span></span>
+        </div>
+        <div id="molName">Glycine dạng ion lưỡng cực</div>
+      </div>
+    </div>
+
+    <div id="status">⚖️ Glycine đang đứng yên ở giữa bể — tổng điện tích bằng 0.</div>
+    <div id="reaction">⁺H<sub>3</sub>N–CH<sub>2</sub>–COO⁻<small>Tổng điện tích: (+1) + (–1) = 0 → ion lưỡng cực, không bị cực nào hút mạnh hơn.</small></div>
+    <div id="netBox">
+      <span class="pill charge-pill" id="netPill">Điện tích tổng: 0</span>
+      <span class="pill env-pill" id="envPill">pH ≈ 6 — Điểm đẳng điện</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 style="font-size:clamp(24px,3.4vw,32px);text-align:center;margin-top:0">📋 Tóm tắt 3 trường hợp — Nhớ là làm được bài!</h2>
+    <table>
+      <tr><th>Môi trường</th><th>Glycine biến thành</th><th>Di chuyển về</th></tr>
+      <tr><td><b>pH &lt; 6</b><br>Dư H⁺</td><td><b>CATION (+1)</b><br>⁺H<sub>3</sub>N–CH<sub>2</sub>–COOH</td><td><b>CỰC ÂM (–)</b></td></tr>
+      <tr><td><b>pH ≈ 6</b><br>Điểm đẳng điện</td><td><b>ION LƯỠNG CỰC (0)</b><br>⁺H<sub>3</sub>N–CH<sub>2</sub>–COO⁻</td><td><b>ĐỨNG YÊN</b></td></tr>
+      <tr><td><b>pH &gt; 6</b><br>Dư OH⁻</td><td><b>ANION (–1)</b><br>H<sub>2</sub>N–CH<sub>2</sub>–COO⁻</td><td><b>CỰC DƯƠNG (+)</b></td></tr>
+    </table>
+    <p class="note">💡 <b>Quy tắc vàng:</b> Trái dấu thì hút nhau. Cation (+) bị cực âm (–) hút, anion (–) bị cực dương (+) hút. Ion lưỡng cực có tổng điện tích bằng 0 nên hầu như không di chuyển.</p>
+    <p class="note">🔬 <b>Giải thích nhanh:</b> Ở pH thấp, nhóm –COO⁻ nhận thêm H⁺ thành –COOH. Ở pH cao, nhóm –NH<sub>3</sub>⁺ nhường H⁺ thành –NH<sub>2</sub>, còn H⁺ + OH⁻ → H<sub>2</sub>O.</p>
+  </section>
+</main>
+
+<footer class="credit">Sản phẩm tạo bởi Cô Nguyễn Thị Minh Thanh - THPT Võ Thị Sáu - Phường Gia Định - TP.Hồ Chí Minh</footer>
+
+<script>
+  var slider = document.getElementById('phSlider');
+  var phValue = document.getElementById('phValue');
+  var tank = document.getElementById('tank');
+  var molecule = document.getElementById('molecule');
+  var leftGroup = document.getElementById('leftGroup');
+  var rightGroup = document.getElementById('rightGroup');
+  var molName = document.getElementById('molName');
+  var statusEl = document.getElementById('status');
+  var reaction = document.getElementById('reaction');
+  var netPill = document.getElementById('netPill');
+  var envPill = document.getElementById('envPill');
+  var envLabel = document.getElementById('envLabel');
+  var moveArrow = document.getElementById('moveArrow');
+  var btnAcid = document.getElementById('btnAcid');
+  var btnNeutral = document.getElementById('btnNeutral');
+  var btnBase = document.getElementById('btnBase');
+  var cathode = document.getElementById('cathode');
+  var currentState = 'neutral';
+
+  // Dat phan tu dung truoc dien cuc, khong bao gio de len chu tren dien cuc.
+  // Dien cuc luon o lop tren (z-index cao hon) nen chu van hien day du neu co cham nhe.
+  function placeMolecule(){
+    var tankW = tank.clientWidth || 1120;
+    var molW = molecule.offsetWidth || 380;
+    var eleW = cathode.offsetWidth || 118;
+    var left;
+    if (currentState === 'cation') left = eleW + molW / 2 + 12;
+    else if (currentState === 'anion') left = tankW - eleW - molW / 2 - 12;
+    else left = tankW / 2;
+    molecule.style.left = left + 'px';
+  }
+  window.addEventListener('resize', placeMolecule);
+
+  function setPH(v){
+    slider.value = v;
+    phValue.textContent = 'pH = ' + v;
+    btnAcid.classList.toggle('active', v < 6);
+    btnNeutral.classList.toggle('active', v === 6);
+    btnBase.classList.toggle('active', v > 6);
+
+    if (v < 6) {
+      tank.className = 'acid';
+      currentState = 'cation';
+      placeMolecule();
+      moveArrow.textContent = '⬅ ĐANG DI CHUYỂN VỀ CỰC ÂM';
+      leftGroup.innerHTML = 'NH<sub>3</sub><span class="charge pos">+</span>';
+      rightGroup.innerHTML = 'COOH';
+      molName.textContent = 'Glycine dạng cation (+1)';
+      statusEl.textContent = '◀ Cation (+) đang di chuyển về CỰC ÂM (–) — điện cực trái dấu!';
+      reaction.innerHTML = '⁺H<sub>3</sub>N–CH<sub>2</sub>–COO⁻ + H⁺ → ⁺H<sub>3</sub>N–CH<sub>2</sub>–COOH<small>Môi trường dư H⁺: nhóm –COO⁻ nhận H⁺ thành –COOH. Nhóm –NH<sub>3</sub>⁺ giữ nguyên. Tổng điện tích +1 → cation.</small>';
+      netPill.textContent = 'Điện tích tổng: +1 (Cation)';
+      envPill.textContent = 'pH = ' + v + ' — Môi trường acid, dư H⁺';
+      envLabel.textContent = 'Môi trường acid — dư H⁺';
+    } else if (v === 6) {
+      tank.className = 'neutral';
+      currentState = 'neutral';
+      placeMolecule();
+      moveArrow.textContent = '';
+      leftGroup.innerHTML = 'NH<sub>3</sub><span class="charge pos">+</span>';
+      rightGroup.innerHTML = 'COO<span class="charge neg">–</span>';
+      molName.textContent = 'Glycine dạng ion lưỡng cực';
+      statusEl.textContent = '⚖️ Glycine đang đứng yên ở giữa bể — tổng điện tích bằng 0.';
+      reaction.innerHTML = '⁺H<sub>3</sub>N–CH<sub>2</sub>–COO⁻<small>Tổng điện tích: (+1) + (–1) = 0 → ion lưỡng cực, không bị cực nào hút mạnh hơn.</small>';
+      netPill.textContent = 'Điện tích tổng: 0';
+      envPill.textContent = 'pH ≈ 6 — Điểm đẳng điện';
+      envLabel.textContent = 'Môi trường cân bằng';
+    } else {
+      tank.className = 'base';
+      currentState = 'anion';
+      placeMolecule();
+      moveArrow.textContent = 'ĐANG DI CHUYỂN VỀ CỰC DƯƠNG ➡️';
+      leftGroup.innerHTML = 'NH<sub>2</sub>';
+      rightGroup.innerHTML = 'COO<span class="charge neg">–</span>';
+      molName.textContent = 'Glycine dạng anion (–1)';
+      statusEl.textContent = '➡️ Anion (–) đang di chuyển về CỰC DƯƠNG (+) — điện cực trái dấu!';
+      reaction.innerHTML = '⁺H<sub>3</sub>N–CH<sub>2</sub>–COO⁻ + OH⁻ → H<sub>2</sub>N–CH<sub>2</sub>–COO⁻ + H<sub>2</sub>O<small>Môi trường dư OH⁻: nhóm –NH<sub>3</sub>⁺ nhường H⁺ thành –NH<sub>2</sub>, H⁺ + OH⁻ → H<sub>2</sub>O. Nhóm –COO⁻ giữ nguyên. Tổng điện tích –1 → anion.</small>';
+      netPill.textContent = 'Điện tích tổng: –1 (Anion)';
+      envPill.textContent = 'pH = ' + v + ' — Môi trường base, dư OH⁻';
+      envLabel.textContent = 'Môi trường base — dư OH⁻';
+    }
+  }
+  setPH(6);
+</script>
+</body>
+</html>
